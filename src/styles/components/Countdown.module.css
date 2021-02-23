@@ -30,7 +30,7 @@
     border-left: 1px solid #F0F1F3;
 }
 
-.contdownContainer span {
+.contdownContainer > span {
     font-size: 6.25rem;
     margin: 0 0.5rem;
 }
