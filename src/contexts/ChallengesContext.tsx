@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useState } from 'react'
+import { createContext, ReactNode, useEffect, useState } from 'react'
 import challenges from '../../json/challenges.json'
 
 type ChallengesContextData = {
@@ -11,6 +11,7 @@ type ChallengesContextData = {
     levelUp: () => void
     startNewChallenge: () => void
     resetChallenge: () => void
+    completeChallenge: () => void
 }
 
 type Challenge = {
@@ -33,6 +34,10 @@ export const ChallengesProvider = ({ children }: ChallengesProviderProps) => {
 
     const expToNextLevel = Math.pow((level +1) *7, 2)
 
+    useEffect(() => {
+        Notification.requestPermission()
+    }, [])
+
     const levelUp = () => {
         setLevel(level+1)
     }
@@ -40,15 +45,42 @@ export const ChallengesProvider = ({ children }: ChallengesProviderProps) => {
     const startNewChallenge = () => {
         const randomChallengeIndex = Math.floor(Math.random() * challenges.length)
         const challenge = challenges[randomChallengeIndex]
+
         setActiveChallenge(challenge)
+
+        new Audio('/notification.mp3').play()
+
+        if (Notification.permission === 'granted') {
+            new Notification('Novo desafio', {
+                body: `Valendo ${challenge.amount}xp!`
+            })
+        }
     }
 
     const resetChallenge = () => {
         setActiveChallenge(null)
     }
 
+    const completeChallenge = () => {
+        if (!activeChallenge) {
+            return
+        }
+
+        const { amount } = activeChallenge
+        let finalExp = currentExp + amount
+
+        if (finalExp >= expToNextLevel) {
+            finalExp = finalExp - expToNextLevel
+            levelUp()
+        }
+
+        setCurrentExp(finalExp)
+        setActiveChallenge(null)
+        setChallengesCompleted(challengesCompleted + 1)
+    }
+
     return (
-        <ChallengesContext.Provider value={{ level, currentExp, challengesCompleted, activeChallenge, expToNextLevel ,levelUp, startNewChallenge, resetChallenge}}>
+        <ChallengesContext.Provider value={{ level, currentExp, challengesCompleted, activeChallenge, expToNextLevel ,levelUp, startNewChallenge, resetChallenge, completeChallenge}}>
             {children}
         </ChallengesContext.Provider>      
     )
